@@ -31,27 +31,6 @@ class LgpunController extends AbstractController
     }
 
     /**
-     * @Route("/cards/playable", methods={"GET","OPTIONS"}, name="getPlayableCards")
-     */
-    public function getPlayableCards():Response{
-        $cards = $this->getDoctrine()->getRepository(Card::class)->findAll();
-        $finalCards = [];
-        foreach ($cards as $card){
-            if ($card->getName() == "Loup Garou" || $card->getName() == "Franc-Maçon"){
-                $finalCards[] = $card;
-                $finalCards[] = $card;
-            }elseif($card->getName() == "Villageois"){
-                $finalCards[] = $card;
-                $finalCards[] = $card;
-                $finalCards[] = $card;
-            }else{
-                $finalCards[] = $card;
-            }
-        }
-        return $this->createResponse($finalCards);
-    }
-
-    /**
      * @Route("/cards/{id}", methods={"GET","OPTIONS"}, name="getSingleCard")
      * @param int $id
      * @return Response
@@ -76,8 +55,9 @@ class LgpunController extends AbstractController
 
             $player = $playerRepo->findOneByFirebaseId($user);
             if ($player instanceof Player){
-                $party = $partyRepo->find(19);
-
+                $party = $partyRepo->findOneByCode($player->getParty()->getCode());
+                $party->setPlayers($party->getPlayers()->getValues());
+                $party->setCards($party->getCards()->getValues());
                 return $this->createResponse($party);
             }else{
                 return $this->createResponse([
@@ -154,6 +134,50 @@ class LgpunController extends AbstractController
             $user = $userRepo->findOneByFirebaseId($params['user']);
 
             $party->addPlayer($user);
+            $this->getDoctrine()->getManager()->persist($party);
+            $this->getDoctrine()->getManager()->flush();
+
+            return $this->createResponse($party);
+        }
+    }
+
+    /**
+     * @Route("/party/quit", methods={"POST","OPTIONS"}, name="partyQuit")
+     * @param Request $request
+     * @return Response
+     */
+    function partyQuit(Request $request){
+        $userRepo = $this->getDoctrine()->getRepository(Player::class);
+
+        $params = json_decode($request->getContent(),true);
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $user = $userRepo->findOneByFirebaseId($params['user']);
+            $user->setParty(null);
+
+            $this->getDoctrine()->getManager()->persist($user);
+            $this->getDoctrine()->getManager()->flush();
+
+            return $this->createResponse($user);
+        }
+    }
+
+    /**
+     * @Route("/party/start", methods={"POST","OPTIONS"}, name="partyStart")
+     * @param Request $request
+     * @return Response
+     */
+    function partyStart(Request $request){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+
+        $params = json_decode($request->getContent(),true);
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $party = $partyRepo->findOneByCode($params['party']);
+            $party->setStarted(true);
+
             $this->getDoctrine()->getManager()->persist($party);
             $this->getDoctrine()->getManager()->flush();
 
