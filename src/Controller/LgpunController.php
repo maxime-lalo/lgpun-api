@@ -66,23 +66,39 @@ class LgpunController extends AbstractController
     }
 
     /**
-     * @Route("/parties", methods={"GET","OPTIONS"}, name="getParties")
-     */
-    public function getParties(): Response
-    {
-        $parties = $this->getDoctrine()->getRepository(Party::class)->findAll();
-        return $this->createResponse($parties);
-    }
-
-    /**
-     * @Route("/parties", methods={"POST","OPTIONS"}, name="createParty")
+     * @Route("/parties/getByUser/{user}", methods={"GET","OPTIONS"}, name="getPartyByUser")
+     * @param string $user
      * @param Request $request
      * @return Response
      */
-    public function createParty(Request $request){
+    public function getPartyByUser(string $user,Request $request){
         if ($request->getMethod() == "OPTIONS"){
             return $this->createResponse([]);
         }else{
+            $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+            $playerRepo = $this->getDoctrine()->getRepository(Player::class);
+
+            $player = $playerRepo->findOneByFirebaseId($user);
+            if ($player instanceof Player){
+                $party = $partyRepo->find(19);
+
+                return $this->createResponse($party);
+            }else{
+                return $this->createResponse([
+                    "error" => "Pas de partie trouvée liée à cet utilisateur"
+                ]);
+            }
+        }
+    }
+
+    /**
+     * @Route("/parties", methods={"GET","POST","OPTIONS"}, name="partiesREST")
+     * @param Request $request
+     * @return Response
+     */
+    public function getParties(Request $request): Response
+    {
+        if ($request->getMethod() == "POST"){
             $cardRepo = $this->getDoctrine()->getRepository(Card::class);
             $partyRepo = $this->getDoctrine()->getRepository(Party::class);
             $playerRepo = $this->getDoctrine()->getRepository(Player::class);
@@ -115,6 +131,11 @@ class LgpunController extends AbstractController
                 $this->getDoctrine()->getManager()->flush();
                 return $this->createResponse($newParty);
             }
+        }elseif($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $parties = $this->getDoctrine()->getRepository(Party::class)->findAll();
+            return $this->createResponse($parties);
         }
     }
 }

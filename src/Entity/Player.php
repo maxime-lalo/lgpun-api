@@ -39,14 +39,8 @@ class Player implements \JsonSerializable
      */
     private $endingCard;
 
-    /**
-     * @ORM\ManyToMany(targetEntity=Party::class, mappedBy="players")
-     */
-    private $parties;
-
     public function __construct()
     {
-        $this->parties = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -98,33 +92,6 @@ class Player implements \JsonSerializable
     public function setEndingCard(?Card $endingCard): self
     {
         $this->endingCard = $endingCard;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Party[]
-     */
-    public function getParties(): Collection
-    {
-        return $this->parties;
-    }
-
-    public function addParty(Party $party): self
-    {
-        if (!$this->parties->contains($party)) {
-            $this->parties[] = $party;
-            $party->addPlayer($this);
-        }
-
-        return $this;
-    }
-
-    public function removeParty(Party $party): self
-    {
-        if ($this->parties->removeElement($party)) {
-            $party->removePlayer($this);
-        }
 
         return $this;
     }
