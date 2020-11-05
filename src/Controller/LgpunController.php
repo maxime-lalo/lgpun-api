@@ -4,13 +4,13 @@ namespace App\Controller;
 
 use App\Entity\Party;
 use App\Entity\Player;
-use Doctrine\Persistence\ObjectManager;
+use App\Entity\Card;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
-use App\Entity\Card;
+
 /**
  * @Route("/lgpun", name="lgpun_")
  */
@@ -18,10 +18,6 @@ class LgpunController extends AbstractController
 {
     private function createResponse($content):Response{
         $response = new Response();
-        $response->headers->set('Content-Type', 'application/json');
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Access-Control-Allow-Origin');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         $response->setContent(json_encode($content));
         return $response;
     }
@@ -96,7 +92,7 @@ class LgpunController extends AbstractController
      * @param Request $request
      * @return Response
      */
-    public function getParties(Request $request): Response
+    public function partiesREST(Request $request): Response
     {
         if ($request->getMethod() == "POST"){
             $cardRepo = $this->getDoctrine()->getRepository(Card::class);
@@ -121,10 +117,8 @@ class LgpunController extends AbstractController
                 $newParty->addPlayer($creator);
                 $newParty->setCode($params['code']);
                 $newParty->setCreator($creator);
-                $newParty->setNumberOfPlayers($params['numberOfPlayers']);
+
                 $newParty->setCardsHidden(false);
-                $newParty->setLastTurn("");
-                $newParty->setTurn("");
                 $newParty->setStarted(false);
 
                 $this->getDoctrine()->getManager()->persist($newParty);
@@ -135,7 +129,35 @@ class LgpunController extends AbstractController
             return $this->createResponse([]);
         }else{
             $parties = $this->getDoctrine()->getRepository(Party::class)->findAll();
+            foreach ($parties as $party){
+                $party->setCards($party->getCards()->getValues());
+                $party->setPlayers($party->getPlayers()->getValues());
+            }
             return $this->createResponse($parties);
+        }
+    }
+
+    /**
+     * @Route("/party/join", methods={"POST","OPTIONS"}, name="partyJoin")
+     * @param Request $request
+     * @return Response
+     */
+    function partyJoin(Request $request){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+        $userRepo = $this->getDoctrine()->getRepository(Player::class);
+
+        $params = json_decode($request->getContent(),true);
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $party = $partyRepo->findOneByCode($params['party']);
+            $user = $userRepo->findOneByFirebaseId($params['user']);
+
+            $party->addPlayer($user);
+            $this->getDoctrine()->getManager()->persist($party);
+            $this->getDoctrine()->getManager()->flush();
+
+            return $this->createResponse($party);
         }
     }
 }

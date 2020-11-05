@@ -39,6 +39,11 @@ class Player implements \JsonSerializable
      */
     private $endingCard;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Party::class, inversedBy="players")
+     */
+    private $party;
+
     public function __construct()
     {
     }
@@ -98,6 +103,24 @@ class Player implements \JsonSerializable
 
     public function jsonSerialize()
     {
-        return get_object_vars($this);
+        return [
+            "id" => $this->id,
+            "id_firebase" => $this->id_firebase,
+            "pseudo" => $this->pseudo,
+            "beginning_card" => $this->beginningCard,
+            "ending_card" => $this->getEndingCard()
+        ];
+    }
+
+    public function getParty(): ?Party
+    {
+        return $this->party;
+    }
+
+    public function setParty(?Party $party): self
+    {
+        $this->party = $party;
+
+        return $this;
     }
 }
