@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\NotUsedCard;
 use App\Entity\Party;
 use App\Entity\Player;
 use App\Entity\Card;
@@ -58,6 +59,7 @@ class LgpunController extends AbstractController
                 $party = $partyRepo->findOneByCode($player->getParty()->getCode());
                 $party->setPlayers($party->getPlayers()->getValues());
                 $party->setCards($party->getCards()->getValues());
+                $party->setNotUsedCards($party->getNotUsedCards()->getValues());
                 return $this->createResponse($party);
             }else{
                 return $this->createResponse([
@@ -178,10 +180,44 @@ class LgpunController extends AbstractController
             $party = $partyRepo->findOneByCode($params['party']);
             $party->setStarted(true);
 
+            $this->shuffleCards($party->getCode());
             $this->getDoctrine()->getManager()->persist($party);
             $this->getDoctrine()->getManager()->flush();
 
             return $this->createResponse($party);
         }
+    }
+
+    private function shuffleCards($partyCode){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+        $nucRepo = $this->getDoctrine()->getRepository(NotUsedCard::class);
+
+        $party = $partyRepo->findOneByCode($partyCode);
+        foreach($party->getNotUsedCards()->getValues() as $notUsedCard){
+            $party->removeNotUsedCard($notUsedCard);
+        }
+        $manager = $this->getDoctrine()->getManager();
+        $manager->persist($party);
+        $manager->flush();
+
+        $cards = $party->getCards()->getValues();
+        $players = $party->getPlayers()->getValues();
+        shuffle($cards);
+
+        $i = 0;
+        foreach ($cards as $card){
+            if ($i < 3){
+                $notUsedCard = $nucRepo->find($card->getId());
+                $party->addNotUsedCard($notUsedCard);
+            }else{
+                $players[$i-3]->setBeginningCard($card);
+                $players[$i-3]->setEndingCard($card);
+                $manager->persist($players[$i-3]);
+            }
+            $i++;
+            $manager->persist($party);
+            $manager->flush();
+        }
+
     }
 }

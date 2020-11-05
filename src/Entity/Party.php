@@ -57,11 +57,17 @@ class Party implements \JsonSerializable
      */
     private $started;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=NotUsedCard::class)
+     */
+    private $notUsedCards;
+
 
     public function __construct()
     {
         $this->players = new ArrayCollection();
         $this->cards = new ArrayCollection();
+        $this->notUsedCards = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -192,6 +198,34 @@ class Party implements \JsonSerializable
     public function setStarted(?bool $started): self
     {
         $this->started = $started;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|NotUsedCard[]
+     */
+    public function getNotUsedCards(): Collection
+    {
+        return $this->notUsedCards;
+    }
+
+    public function addNotUsedCard(NotUsedCard $notUsedCard): self
+    {
+        if (!$this->notUsedCards->contains($notUsedCard)) {
+            $this->notUsedCards[] = $notUsedCard;
+        }
+
+        return $this;
+    }
+
+    public function setNotUsedCards($cards){
+        $this->notUsedCards = $cards;
+    }
+
+    public function removeNotUsedCard(NotUsedCard $notUsedCard): self
+    {
+        $this->notUsedCards->removeElement($notUsedCard);
 
         return $this;
     }
