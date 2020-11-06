@@ -102,7 +102,7 @@ class LgpunController extends AbstractController
 
                 $newParty->setCardsHidden(false);
                 $newParty->setStarted(false);
-
+                $newParty->setEnded(false);
                 $this->getDoctrine()->getManager()->persist($newParty);
                 $this->getDoctrine()->getManager()->flush();
                 return $this->createResponse($newParty);
@@ -381,13 +381,103 @@ class LgpunController extends AbstractController
                         return $this->createResponse($userTurn);
                     } else {
                         $party->setTurn(null);
+                        $party->setEnded(true);
                         $this->getDoctrine()->getManager()->persist($party);
                         $this->getDoctrine()->getManager()->flush();
+
                         return $this->createResponse(["error", "fin de partie"]);
                     }
                 }
                 $index++;
             }
+        }
+    }
+
+    /**
+     * @Route("/party/invertCards", methods={"POST","OPTIONS"}, name="partyInvertCards")
+     * @param Request $request
+     * @return Response
+     */
+    public function invertCards(Request $request){
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $partyManager = $this->getDoctrine()->getRepository(Party::class);
+            $params = json_decode($request->getContent(), true);
+
+            $firstCard = $params['first_card'];
+            $secondCard = $params['second_card'];
+
+            $party = $partyManager->findOneByCode($params['party']);
+
+            $firstPlayer = null;
+            $secondPlayer = null;
+            foreach($party->getPlayers()->getValues() as $player){
+                if ($player->getEndingCard()->getId() == $firstCard){
+                    $firstPlayer = $player;
+                }elseif($player->getEndingCard()->getId() == $secondCard){
+                    $secondPlayer = $player;
+                }
+            }
+
+            $temp = $firstPlayer->getEndingCard();
+            $firstPlayer->setEndingCard($secondPlayer->getEndingCard());
+            $secondPlayer->setEndingCard($temp);
+
+            $this->getDoctrine()->getManager()->persist($firstPlayer);
+            $this->getDoctrine()->getManager()->persist($secondPlayer);
+            $this->getDoctrine()->getManager()->flush();
+
+            return $this->createResponse(['success','swapped']);
+        }
+    }
+
+    /**
+     * @Route("/party/invertNotUsed", methods={"POST","OPTIONS"}, name="partyInvertNotUsed")
+     * @param Request $request
+     * @return Response
+     */
+    public function invertNotUsed(Request $request){
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $partyManager = $this->getDoctrine()->getRepository(Party::class);
+            $notUsedCardsManager = $this->getDoctrine()->getRepository(NotUsedCard::class);
+            $cardsManager = $this->getDoctrine()->getRepository(Card::class);
+
+            $params = json_decode($request->getContent(), true);
+
+            // L'id de la carte du joueur
+            $usedCard = $params['used_card'];
+
+            // La carte du joueur mais en objet NotUsedCard
+            $usedCardNotUsedCard = $notUsedCardsManager->find($usedCard);
+
+            // La carte not used
+            $notUsedCard = $notUsedCardsManager->find($params['not_used_card']);
+
+            // La carte not used mais en objet Card
+            $notUsedCardCard = $cardsManager->find($params['not_used_card']);
+
+            $party = $partyManager->findOneByCode($params['party']);
+            $party->removeNotUsedCard($notUsedCard);
+
+            $playerToSwap = null;
+            foreach($party->getPlayers()->getValues() as $player){
+                if ($player->getEndingCard()->getId() == $usedCard){
+                    $playerToSwap = $player;
+                }
+            }
+
+
+            $playerToSwap->setEndingCard($notUsedCardCard);
+            $party->addNotUsedCard($usedCardNotUsedCard);
+
+            $this->getDoctrine()->getManager()->persist($player);
+            $this->getDoctrine()->getManager()->persist($party);
+            $this->getDoctrine()->getManager()->flush();
+
+            return $this->createResponse(['success','swapped']);
         }
     }
 }

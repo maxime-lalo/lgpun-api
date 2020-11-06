@@ -67,6 +67,11 @@ class Party implements \JsonSerializable
      */
     private $doppelCard;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $ended;
+
 
     public function __construct()
     {
@@ -243,6 +248,18 @@ class Party implements \JsonSerializable
     public function setDoppelCard(?Card $doppelCard): self
     {
         $this->doppelCard = $doppelCard;
+
+        return $this;
+    }
+
+    public function getEnded(): ?bool
+    {
+        return $this->ended;
+    }
+
+    public function setEnded(bool $ended): self
+    {
+        $this->ended = $ended;
 
         return $this;
     }
