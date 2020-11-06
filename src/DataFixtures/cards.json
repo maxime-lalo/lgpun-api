@@ -12,74 +12,107 @@
   "name" : "Loup Garou",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Floup_garou.jpg?alt=media&token=c6eb5ce7-e6bf-4717-9667-791a82888f1b",
   "position" : 2
+},
+{
+  "desc" : "S'ils sont deux ils se voient, s'il est seul il peut voir une carte au centre",
+  "help" : "Votre rôle est de faire croire aux villageois que vous êtes dans leur camp, vous gagnez la partie si aucun des deux loups n'est tué par le village",
+  "id" : 2,
+  "name" : "Loup Garou",
+  "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Floup_garou.jpg?alt=media&token=c6eb5ce7-e6bf-4717-9667-791a82888f1b",
+  "position" : 2
 }, {
   "desc" : "Voit qui sont les loups, son but est d'innocenter les loups, si c'est lui qui est tué alors les loups et lui gagnent",
   "help" : "Votre but est d'aider les loups à ne pas se faire tuer, vous gagnez la partie si aucun loup n'est tué. Si c'est vous qui êtes tué vous gagnez également.",
-  "id" : 2,
+  "id" : 3,
   "name" : "Sbire",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fsbire.jpg?alt=media&token=d14af0f1-1582-4d49-8bd9-a370480e3653",
   "position" : 3
 }, {
   "desc" : "Fonctionne par paire, s'ils sont deux ils se voient et se savent innocents, s'il est seul il peut voir une carte au centre",
   "help" : "Vous êtes dans le camp des villageois, si vous êtes deux vous aurez un partenaire pour vous aider, si vous êtes seul vous pourrez analyser une carte au centre.",
-  "id" : 3,
+  "id" : 4,
   "name" : "Franc-Maçon",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Ffranc_macon.jpg?alt=media&token=1590ac18-5e4b-42ad-bea3-519489dc8117",
   "position" : 4
-}, {
+},
+{
+  "desc" : "Fonctionne par paire, s'ils sont deux ils se voient et se savent innocents, s'il est seul il peut voir une carte au centre",
+  "help" : "Vous êtes dans le camp des villageois, si vous êtes deux vous aurez un partenaire pour vous aider, si vous êtes seul vous pourrez analyser une carte au centre.",
+  "id" : 5,
+  "name" : "Franc-Maçon",
+  "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Ffranc_macon.jpg?alt=media&token=1590ac18-5e4b-42ad-bea3-519489dc8117",
+  "position" : 4
+},{
   "desc" : "Peut voir la carte de quelqu'un ou deux cartes au centre",
   "help" : "Vous êtes dans le camp des villageois. A votre tour vous pourrez choisir soit de voir la carte d'une personne soit de voir deux cartes au centre.",
-  "id" : 4,
+  "id" : 6,
   "name" : "Voyante",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fvoyante.jpg?alt=media&token=d48fe215-0a53-4992-a8dd-602e7d99ebb3",
   "position" : 5
 }, {
   "desc" : "Échange sa carte avec quelqu'un, ne voit pas la carte qu'il récupère",
   "help" : "A votre tour vous échangerez votre carte avec une personne, sans voir la carte. Votre camp sera celui de la carte que vous avez volé, analysez bien le jeu pour savoir dans quel camp vous serez.",
-  "id" : 5,
+  "id" : 7,
   "name" : "Voleur",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fvoleur.jpg?alt=media&token=a9f18bab-5074-4037-91e7-85109705dbed",
   "position" : 6
 }, {
   "desc" : "Inverse les cartes de deux personnes (pas sa propre carte)",
   "help" : "Vous êtes dans le camp des villageois, vous pouvez inverser les cartes de deux autres personnes.",
-  "id" : 6,
+  "id" : 8,
   "name" : "Noiseuse",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fnoiseuse.jpg?alt=media&token=547f25b3-7163-4ec4-bc7f-4104e6a5113f",
   "position" : 7
 }, {
   "desc" : "Récupère une carte au centre sans savoir ce qu'il récupère",
   "help" : "A votre tour vous prendrez une carte au centre au hasard, votre camp sera celui de la carte que vous avez pris.",
-  "id" : 7,
+  "id" : 9,
   "name" : "Soulard",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fsoulard.jpg?alt=media&token=d0296df3-c4f6-4cc2-829d-f7dd52eaa80d",
   "position" : 8
 }, {
   "desc" : "Voit sa carte juste avant le réveil",
   "help" : "A votre tour de jeu vous pourrez voir votre carte avant le réveil, votre camp sera celui de la carte que vous visualisez.",
-  "id" : 8,
+  "id" : 10,
   "name" : "Insomniaque",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Finsomniaque.jpg?alt=media&token=e28f05de-e5f7-4ba6-ab71-24aec4b8c031",
   "position" : 9
 }, {
   "desc" : "Son but est de se faire tuer, si il y arrive, il gagne",
   "help" : "Pour gagner il faut que vous arriviez à vous faire tuer par le village. Vous gagnez seul et par conséquent êtes dans votre propre camp.",
-  "id" : 9,
+  "id" : 11,
   "name" : "Tanneur",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Ftanneur.jpg?alt=media&token=9eb630ff-aee1-46ed-8103-6c4d555a9fb3",
   "position" : 0
 }, {
   "desc" : "Quand il est tué, peut tuer quelqu'un d'autre",
   "help" : "Vous êtes dans le camp des villageois, si vous vous faites tuer vous pourrez tuer une personne en retour.",
-  "id" : 10,
+  "id" : 12,
   "name" : "Chasseur",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fchasseur.jpg?alt=media&token=b29eb0ed-37f4-4c83-a7a7-ef793cfee4b2",
   "position" : 0
 }, {
   "desc" : "Pue sa mère",
   "help" : "Tu pues ta mère. Grosse merde.",
-  "id" : 11,
+  "id" : 13,
   "name" : "Villageois",
   "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fvillageois.jpg?alt=media&token=2534e0f2-edac-4264-b36a-c83f7364fce1",
   "position" : 0
-} ]
+},
+{
+  "desc" : "Pue sa mère",
+  "help" : "Tu pues ta mère. Grosse merde.",
+  "id" : 14,
+  "name" : "Villageois",
+  "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fvillageois.jpg?alt=media&token=2534e0f2-edac-4264-b36a-c83f7364fce1",
+  "position" : 0
+},
+{
+  "desc" : "Pue sa mère",
+  "help" : "Tu pues ta mère. Grosse merde.",
+  "id" : 15,
+  "name" : "Villageois",
+  "photo" : "https://firebasestorage.googleapis.com/v0/b/lgpun-20cfa.appspot.com/o/roles%2Fvillageois.jpg?alt=media&token=2534e0f2-edac-4264-b36a-c83f7364fce1",
+  "position" : 0
+}
+]

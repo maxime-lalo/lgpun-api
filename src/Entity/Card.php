@@ -42,6 +42,10 @@ class Card implements \JsonSerializable
      */
     private $help;
 
+    public function setId($id){
+        $this->id = $id;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
