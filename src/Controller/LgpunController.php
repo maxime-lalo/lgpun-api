@@ -24,6 +24,26 @@ class LgpunController extends AbstractController
     }
 
     /**
+     * @Route("/user", methods={"POST","OPTIONS"}, name="userREST")
+     * @param Request $request
+     * @return Response
+     */
+    public function playerRest(Request $request){
+        $playerRepo = $this->getDoctrine()->getRepository(Player::class);
+
+        $params = json_decode($request->getContent(),true);
+
+        $player = new Player();
+        $player->setPseudo($params['pseudo']);
+        $player->setIdFirebase($params['id_firebase']);
+
+        $this->getDoctrine()->getManager()->persist($player);
+        $this->getDoctrine()->getManager()->flush();
+
+        return $this->createResponse($player);
+    }
+
+    /**
      * @Route("/cards", methods={"GET","OPTIONS"}, name="getCards")
      */
     public function getCards():Response{
