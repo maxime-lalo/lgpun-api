@@ -25,13 +25,23 @@ class AppFixtures extends Fixture
             $manager->persist($newCard);
         }
 
+        $playerRepo = $manager->getRepository(Player::class);
+        $allUsers = $playerRepo->findAll();
+        foreach($allUsers as $user){
+            $user->setParty(null);
+            $user->setBeginningCard(null);
+            $user->setEndingCard(null);
+            $manager->persist($user);
+        }
+        $manager->flush();
+
         $users = file_get_contents(__DIR__ . "/users.json");
         $users = json_decode($users,true);
         foreach ($users as $user){
-            $user = new Player();
-            $user->setIdFirebase($user['id_firebase']);
-            $user->setPseudo($user['pseudo']);
-            $manager->persist($user);
+            $newPlayer = new Player();
+            $newPlayer->setIdFirebase($user['id_firebase']);
+            $newPlayer->setPseudo($user['pseudo']);
+            $manager->persist($newPlayer);
         }
         $manager->flush();
     }

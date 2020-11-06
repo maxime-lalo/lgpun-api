@@ -70,7 +70,7 @@ class LgpunController extends AbstractController
     }
 
     /**
-     * @Route("/parties", methods={"GET","POST","OPTIONS"}, name="partiesREST")
+     * @Route("/parties", methods={"GET","POST","OPTIONS","DELETE"}, name="partiesREST")
      * @param Request $request
      * @return Response
      */
@@ -109,6 +109,32 @@ class LgpunController extends AbstractController
             }
         }elseif($request->getMethod() == "OPTIONS"){
             return $this->createResponse([]);
+        }elseif($request->getMethod() == "DELETE"){
+            $cardRepo = $this->getDoctrine()->getRepository(Card::class);
+            $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+            $playerRepo = $this->getDoctrine()->getRepository(Player::class);
+
+            $params = json_decode($request->getContent(),true);
+
+            $party = $partyRepo->findOnyByCode($params['code']);
+            if ($party){
+                if ($party->getStarted()){
+                    return $this->createResponse(["error","Vous ne pouvez pas supprimer une partie en cours !"]);
+                }else{
+                    $players = $party->getPlayers()->getValues();
+                    foreach($players as $player){
+                        $player->setParty(null);
+                        $player->setBeginningCard(null);
+                        $player->setEndingCard(null);
+                        $this->getDoctrine()->getManager()->persist($player);
+                    }
+                    $this->getDoctrine()->getManager()->remove($party);
+                    $this->getDoctrine()->getManager()->flush();
+                    return $this->createResponse(["success" => "Partie supprimée"]);
+                }
+            }else{
+                return $this->createResponse(["error" => "party not found"]);
+            }
         }else{
             $parties = $this->getDoctrine()->getRepository(Party::class)->findAll();
             foreach ($parties as $party){
