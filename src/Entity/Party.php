@@ -62,6 +62,11 @@ class Party implements \JsonSerializable
      */
     private $notUsedCards;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Card::class)
+     */
+    private $doppelCard;
+
 
     public function __construct()
     {
@@ -226,6 +231,18 @@ class Party implements \JsonSerializable
     public function removeNotUsedCard(NotUsedCard $notUsedCard): self
     {
         $this->notUsedCards->removeElement($notUsedCard);
+
+        return $this;
+    }
+
+    public function getDoppelCard(): ?Card
+    {
+        return $this->doppelCard;
+    }
+
+    public function setDoppelCard(?Card $doppelCard): self
+    {
+        $this->doppelCard = $doppelCard;
 
         return $this;
     }

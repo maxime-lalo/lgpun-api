@@ -212,6 +212,82 @@ class LgpunController extends AbstractController
         }
     }
 
+    /**
+     * @Route("/party/hideCards", methods={"POST","OPTIONS"}, name="partyHideCards")
+     * @param Request $request
+     * @return Response
+     */
+    function hideCards(Request $request){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+
+        $params = json_decode($request->getContent(),true);
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $party = $partyRepo->findOneByCode($params['party']);
+            $party->setCardsHidden(true);
+            $this->getDoctrine()->getManager()->persist($party);
+            $this->getDoctrine()->getManager()->flush();
+
+            return $this->createResponse($party);
+        }
+    }
+    /**
+     * @Route("/party/isAlone", methods={"POST","OPTIONS"}, name="partyIsAlone")
+     * @param Request $request
+     * @return Response
+     */
+    public function isAlone(Request $request){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+        $playerRepo = $this->getDoctrine()->getRepository(Player::class);
+
+        $params = json_decode($request->getContent(),true);
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $party = $partyRepo->findOneByCode($params['party']);
+            $type = $params['type'];
+
+            $doppelCard = $party->getDoppelCard();
+            if ($doppelCard != null){
+                $doppelCard = $doppelCard->getId();
+            }
+
+            if ($type == 'wolf'){
+                $allWolves = [];
+
+                $doppelIsWolf = $doppelCard == 2 || $doppelCard == 3;
+
+                foreach($party->getPlayers() as $player){
+                    if ($doppelIsWolf && ($player->getBeginningCard()->getId() == 1) ){
+                        $allWolves[] = $player;
+                    }
+                    if (($player->getBeginningCard()->getId() == 2) || ($player->getBeginningCard()->getId() == 3) ){
+                        $allWolves[] = $player;
+                    }
+                }
+
+                return $this->createResponse($allWolves);
+            }else{
+                $allFrancs = [];
+                $doppelIsFranc = $doppelCard == 5 || $doppelCard == 6;
+                foreach($party->getPlayers() as $player){
+                    // Si la personne qui est dopel est présente on l'ajoute
+                    if ($doppelIsFranc && ($player->getBeginningCard()->getId() == 1) ){
+                        $allFrancs[] = $player;
+                    }
+
+                    // on ajoute tous les autres francs
+                    if (($player->getBeginningCard()->getId() == 5) || ($player->getBeginningCard()->getId() == 6) ){
+                        $allFrancs[] = $player;
+                    }
+                }
+
+                return $this->createResponse($allFrancs);
+            }
+        }
+    }
+
     private function shuffleCards($partyCode){
         $partyRepo = $this->getDoctrine()->getRepository(Party::class);
         $nucRepo = $this->getDoctrine()->getRepository(NotUsedCard::class);
@@ -229,6 +305,9 @@ class LgpunController extends AbstractController
         shuffle($cards);
 
         $i = 0;
+
+        $minCard = 9999;
+        $minUser = null;
         foreach ($cards as $card){
             if ($i < 3){
                 $notUsedCard = $nucRepo->find($card->getId());
@@ -236,12 +315,79 @@ class LgpunController extends AbstractController
             }else{
                 $players[$i-3]->setBeginningCard($card);
                 $players[$i-3]->setEndingCard($card);
+
+                if ($card->getId() <= $minCard){
+                    $minCard = $card->getId();
+                    $minUser = $players[$i-3];
+                }
+
                 $manager->persist($players[$i-3]);
             }
             $i++;
             $manager->persist($party);
-            $manager->flush();
         }
 
+        $party->setTurn($minUser);
+        $manager->flush();
+    }
+
+    /**
+     * @Route("/party/nextTurn", methods={"POST","OPTIONS"}, name="partyNextTurn")
+     * @param Request $request
+     * @return Response
+     */
+    public function nextTurnParty(Request $request){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+        $playerRepo = $this->getDoctrine()->getRepository(Player::class);
+
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $params = json_decode($request->getContent(), true);
+
+            $party = $partyRepo->findOneByCode($params['party']);
+            $players = $party->getPlayers()->getValues();
+
+            $actualTurn = $party->getTurn()->getBeginningCard()->getId();
+            $orderedUsers = [];
+            foreach ($players as $player) {
+                $orderedUsers[] = [
+                    "id_firebase" => $player->getIdFirebase(),
+                    "cardPosition" => $player->getBeginningCard()->getId()
+                ];
+            }
+
+            $swapped = 1;
+            while ($swapped == 1) {
+                $swapped = 0;
+                for ($i = 0; $i < count($orderedUsers) - 1; $i++) {
+                    if ($orderedUsers[$i]['cardPosition'] > $orderedUsers[$i + 1]['cardPosition']) {
+                        $temp = $orderedUsers[$i];
+                        $orderedUsers[$i] = $orderedUsers[$i + 1];
+                        $orderedUsers[$i + 1] = $temp;
+                        $swapped = 1;
+                    }
+                }
+            }
+
+            $index = 0;
+            foreach ($orderedUsers as $user) {
+                if ($user['cardPosition'] == $actualTurn) {
+                    if (isset($orderedUsers[$index + 1])) {
+                        $userTurn = $playerRepo->findOneByFirebaseId($orderedUsers[$index + 1]['id_firebase']);
+                        $party->setTurn($userTurn);
+                        $this->getDoctrine()->getManager()->persist($party);
+                        $this->getDoctrine()->getManager()->flush();
+                        return $this->createResponse($userTurn);
+                    } else {
+                        $party->setTurn(null);
+                        $this->getDoctrine()->getManager()->persist($party);
+                        $this->getDoctrine()->getManager()->flush();
+                        return $this->createResponse(["error", "fin de partie"]);
+                    }
+                }
+                $index++;
+            }
+        }
     }
 }

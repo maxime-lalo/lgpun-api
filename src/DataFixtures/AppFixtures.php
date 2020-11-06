@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\Card;
+use App\Entity\NotUsedCard;
 use App\Entity\Player;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -23,6 +24,15 @@ class AppFixtures extends Fixture
             $newCard->setHelp($card['help']);
             $newCard->setId($card['id']);
             $manager->persist($newCard);
+
+            $newNotUsedCard = new NotUsedCard();
+            $newNotUsedCard->setDescription($card['desc']);
+            $newNotUsedCard->setName($card['name']);
+            $newNotUsedCard->setPhoto($card['photo']);
+            $newNotUsedCard->setPosition($card['position']);
+            $newNotUsedCard->setHelp($card['help']);
+            $newNotUsedCard->setId($card['id']);
+            $manager->persist($newNotUsedCard);
         }
 
         $playerRepo = $manager->getRepository(Player::class);
