@@ -110,13 +110,11 @@ class LgpunController extends AbstractController
         }elseif($request->getMethod() == "OPTIONS"){
             return $this->createResponse([]);
         }elseif($request->getMethod() == "DELETE"){
-            $cardRepo = $this->getDoctrine()->getRepository(Card::class);
             $partyRepo = $this->getDoctrine()->getRepository(Party::class);
-            $playerRepo = $this->getDoctrine()->getRepository(Player::class);
 
             $params = json_decode($request->getContent(),true);
 
-            $party = $partyRepo->findOnyByCode($params['code']);
+            $party = $partyRepo->findOneByCode($params['code']);
             if ($party){
                 if ($party->getStarted()){
                     return $this->createResponse(["error","Vous ne pouvez pas supprimer une partie en cours !"]);
