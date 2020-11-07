@@ -7,6 +7,7 @@ use App\Entity\Party;
 use App\Entity\Player;
 use App\Entity\Card;
 
+use DateTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -352,65 +353,151 @@ class LgpunController extends AbstractController
     }
 
     /**
+     * @Route("/parties/nextTurn", methods={"POST","OPTIONS"}, name="allPartiesNextTurn")
+     * @return Response
+     */
+    public function nextTurnAllParties(){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+        $parties = $partyRepo->findAll();
+
+        $now = new DateTime('now');
+
+        foreach($parties as $party){
+            if ($party->getTurnEnd() < $now){
+                $this->triggerNextTurn($party->getCode());
+            }
+        }
+
+        return $this->createResponse($now);
+    }
+
+    private function triggerNextTurn($partyCode){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+
+        // On récupère maintenant et dans 20 secondes pour set la fin du tour
+        $now = new DateTime('now');
+        $in20s = $now->add(new \DateInterval('PT20S'));
+
+        // On récupère la partie et on set la fin du tour à dans 20s
+        $party = $partyRepo->findOneByCode($partyCode);
+        $party->setTurnEnd($in20s);
+
+        // On renregistre la fin du tour dans 20sec
+        $this->getDoctrine()->getManager()->persist($party);
+        $this->getDoctrine()->getManager()->flush();
+
+
+        // On récupère le fake turn et le turn et on vérifie le quel des deux est activé
+        $fakeTurn = $party->getFakeTurn();
+        $turn = $party->getTurn();
+        if ($fakeTurn == null){
+            $actualTurn = [
+                'turn' => $turn->getBeginningCard()->getId(),
+                'type' => 'card'
+            ];
+        }else{
+            $actualTurn = [
+                'turn' => $fakeTurn->getId(),
+                'type' => 'fake'
+            ];
+        }
+
+        // On va venir récupérer toutes les cartes jouables, not used et used
+        $allPlayableCards = [];
+
+        foreach($party->getCards() as $card){
+            if ($card->getPosition() != 0){
+                $allPlayableCards[] = [
+                    'card' => $card,
+                    'type' => 'card'
+                ];
+            }
+        }
+
+        foreach ($party->getNotUsedCards() as $card){
+            foreach ($allPlayableCards as $key => $playableCard){
+                if ($card->getId() == $playableCard['card']->getId()){
+                    $allPlayableCards[$key]['card'] = $card;
+                    $allPlayableCards[$key]['type'] = 'fake';
+                }
+            }
+        }
+
+        // On les trie dans l'ordre
+        $swapped = 1;
+        while($swapped == 1){
+            $swapped = 0;
+            $i = 0;
+            for($i = 0; $i < (count($allPlayableCards)-1); $i++){
+                if ($allPlayableCards[$i]['card']->getId() > $allPlayableCards[$i+1]['card']->getId()){
+                    $temp = $allPlayableCards[$i];
+                    $allPlayableCards[$i] = $allPlayableCards[$i+1];
+                    $allPlayableCards[$i+1] = $temp;
+                    $swapped = 1;
+                }
+            }
+        }
+
+        $nextTurn = null;
+
+        // Une fois dans l'ordre on regarde laquelle est jouée actuellement, et on prend celle d'après
+        foreach($allPlayableCards as $key => $card){
+            if ($allPlayableCards[$key]['card']->getId() == $actualTurn['turn']){
+                // Si il y a bien une carte suivante on la set et on la renvoie
+                if (isset($allPlayableCards[$key+1])){
+                    $this->setTurn($allPlayableCards[$key+1]['card'],$party->getCode());
+                    return $allPlayableCards[$key+1];
+                }else{
+                    // Si il n'y en a pas on termine la partie
+                    $party->setStarted(false);
+                    $party->setEnded(true);
+
+                    $party->setTurn(null);
+                    $party->setFakeTurn(null);
+                    $party->setTurnEnd(null);
+
+                    $this->getDoctrine()->getManager()->persist($party);
+                    $this->getDoctrine()->getManager()->flush();
+                }
+            }
+        }
+    }
+    /**
      * @Route("/party/nextTurn", methods={"POST","OPTIONS"}, name="partyNextTurn")
      * @param Request $request
      * @return Response
      */
     public function nextTurnParty(Request $request){
-        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
-        $playerRepo = $this->getDoctrine()->getRepository(Player::class);
-
         if ($request->getMethod() == "OPTIONS"){
             return $this->createResponse([]);
         }else{
             $params = json_decode($request->getContent(), true);
-
-            $party = $partyRepo->findOneByCode($params['party']);
-            $players = $party->getPlayers()->getValues();
-
-            $actualTurn = $party->getTurn()->getBeginningCard()->getId();
-            $orderedUsers = [];
-            foreach ($players as $player) {
-                $orderedUsers[] = [
-                    "id_firebase" => $player->getIdFirebase(),
-                    "cardPosition" => $player->getBeginningCard()->getId()
-                ];
-            }
-
-            $swapped = 1;
-            while ($swapped == 1) {
-                $swapped = 0;
-                for ($i = 0; $i < count($orderedUsers) - 1; $i++) {
-                    if ($orderedUsers[$i]['cardPosition'] > $orderedUsers[$i + 1]['cardPosition']) {
-                        $temp = $orderedUsers[$i];
-                        $orderedUsers[$i] = $orderedUsers[$i + 1];
-                        $orderedUsers[$i + 1] = $temp;
-                        $swapped = 1;
-                    }
-                }
-            }
-
-            $index = 0;
-            foreach ($orderedUsers as $user) {
-                if ($user['cardPosition'] == $actualTurn) {
-                    if (isset($orderedUsers[$index + 1])) {
-                        $userTurn = $playerRepo->findOneByFirebaseId($orderedUsers[$index + 1]['id_firebase']);
-                        $party->setTurn($userTurn);
-                        $this->getDoctrine()->getManager()->persist($party);
-                        $this->getDoctrine()->getManager()->flush();
-                        return $this->createResponse($userTurn);
-                    } else {
-                        $party->setTurn(null);
-                        $party->setEnded(true);
-                        $this->getDoctrine()->getManager()->persist($party);
-                        $this->getDoctrine()->getManager()->flush();
-
-                        return $this->createResponse(["error", "fin de partie"]);
-                    }
-                }
-                $index++;
-            }
+            $nextTurn = $this->triggerNextTurn($params['party']);
+            return $this->createResponse($nextTurn);
         }
+    }
+
+
+    private function setTurn($card,$partyCode){
+        $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+        $cardRepo = $this->getDoctrine()->getRepository(Card::class);
+        $party = $partyRepo->findOneByCode($partyCode);
+
+        // si c'est une vraie carte alors c'est le tour d'un joueur, sinon c'est un fake tour
+        if ($card instanceof Card){
+            foreach($party->getPlayers() as $player){
+                if ($player->getBeginningCard()->getId() == $card->getId()){
+                    $party->setTurn($player);
+                    $party->setFakeTurn(null);
+                }
+            }
+        }else{
+            $party->setFakeTurn($cardRepo->find($card->getId()));
+            $party->setTurn(null);
+        }
+
+        $this->getDoctrine()->getManager()->persist($party);
+        $this->getDoctrine()->getManager()->flush();
     }
 
     /**

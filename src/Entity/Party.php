@@ -72,6 +72,16 @@ class Party implements \JsonSerializable
      */
     private $ended;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Card::class)
+     */
+    private $fakeTurn;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $turnEnd;
+
 
     public function __construct()
     {
@@ -260,6 +270,30 @@ class Party implements \JsonSerializable
     public function setEnded(bool $ended): self
     {
         $this->ended = $ended;
+
+        return $this;
+    }
+
+    public function getFakeTurn(): ?Card
+    {
+        return $this->fakeTurn;
+    }
+
+    public function setFakeTurn(?Card $fakeTurn): self
+    {
+        $this->fakeTurn = $fakeTurn;
+
+        return $this;
+    }
+
+    public function getTurnEnd(): ?\DateTimeInterface
+    {
+        return $this->turnEnd;
+    }
+
+    public function setTurnEnd(?\DateTimeInterface $turnEnd): self
+    {
+        $this->turnEnd = $turnEnd;
 
         return $this;
     }
