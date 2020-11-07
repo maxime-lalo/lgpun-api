@@ -224,7 +224,7 @@ class LgpunController extends AbstractController
         }else{
             $party = $partyRepo->findOneByCode($params['party']);
             $party->setStarted(true);
-
+            $party->setEnded(false);
             $this->shuffleCards($party->getCode());
             $this->getDoctrine()->getManager()->persist($party);
             $this->getDoctrine()->getManager()->flush();
@@ -313,6 +313,9 @@ class LgpunController extends AbstractController
         $partyRepo = $this->getDoctrine()->getRepository(Party::class);
         $nucRepo = $this->getDoctrine()->getRepository(NotUsedCard::class);
 
+        $now = new DateTime('now');
+        $in20s = $now->add(new \DateInterval('PT20S'));
+
         $party = $partyRepo->findOneByCode($partyCode);
         foreach($party->getNotUsedCards()->getValues() as $notUsedCard){
             $party->removeNotUsedCard($notUsedCard);
@@ -322,6 +325,9 @@ class LgpunController extends AbstractController
         $manager->flush();
 
         $cards = $party->getCards()->getValues();
+
+        $firstCardToPlay = $cards[0];
+
         $players = $party->getPlayers()->getValues();
         shuffle($cards);
 
@@ -330,6 +336,20 @@ class LgpunController extends AbstractController
         $minCard = 9999;
         $minUser = null;
         foreach ($cards as $card){
+            // On récupère la première carte qui va jouer
+            if ($firstCardToPlay->getId() == $card->getId()){
+                // Si i est < 3 alors la première carte sera une fake card
+                if ($i < 3){
+                    $party->setFakeTurn($nucRepo->find($card->getId()));
+                    $party->setTurn(null);
+                    $party->setTurnEnd($in20s);
+                }else{
+                    $party->setFakeTurn(null);
+                    $party->setTurn($players[$i-3]);
+                    $party->setTurnEnd($in20s);
+                    // Sinon ça sera au tour d'un user
+                }
+            }
             if ($i < 3){
                 $notUsedCard = $nucRepo->find($card->getId());
                 $party->addNotUsedCard($notUsedCard);
@@ -348,16 +368,11 @@ class LgpunController extends AbstractController
             $manager->persist($party);
         }
 
-        $now = new DateTime('now');
-        $in20s = $now->add(new \DateInterval('PT20S'));
-        $party->setTurn($minUser);
-        $party->setTurnEnd($in20s);
-        $manager->persist($party);
         $manager->flush();
     }
 
     /**
-     * @Route("/parties/nextTurn", methods={"POST","OPTIONS"}, name="allPartiesNextTurn")
+     * @Route("/parties/nextTurn", methods={"GET", "POST","OPTIONS"}, name="allPartiesNextTurn")
      * @return Response
      */
     public function nextTurnAllParties(){
