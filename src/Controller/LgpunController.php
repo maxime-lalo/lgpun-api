@@ -7,6 +7,7 @@ use App\Entity\Party;
 use App\Entity\Player;
 use App\Entity\Card;
 
+use App\Entity\Vote;
 use DateTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,18 +31,23 @@ class LgpunController extends AbstractController
      * @return Response
      */
     public function playerRest(Request $request){
-        $playerRepo = $this->getDoctrine()->getRepository(Player::class);
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $playerRepo = $this->getDoctrine()->getRepository(Player::class);
 
-        $params = json_decode($request->getContent(),true);
+            $params = json_decode($request->getContent(),true);
 
-        $player = new Player();
-        $player->setPseudo($params['pseudo']);
-        $player->setIdFirebase($params['id_firebase']);
+            $player = new Player();
+            $player->setPseudo($params['pseudo']);
+            $player->setIdFirebase($params['id_firebase']);
 
-        $this->getDoctrine()->getManager()->persist($player);
-        $this->getDoctrine()->getManager()->flush();
+            $this->getDoctrine()->getManager()->persist($player);
+            $this->getDoctrine()->getManager()->flush();
 
-        return $this->createResponse($player);
+            return $this->createResponse($player);
+        }
+
     }
 
     /**
@@ -81,6 +87,7 @@ class LgpunController extends AbstractController
                 $party->setPlayers($party->getPlayers()->getValues());
                 $party->setCards($party->getCards()->getValues());
                 $party->setNotUsedCards($party->getNotUsedCards()->getValues());
+                $party->setVotes($party->getVotes()->getValues());
                 return $this->createResponse($party);
             }else{
                 return $this->createResponse([
@@ -159,6 +166,7 @@ class LgpunController extends AbstractController
             foreach ($parties as $party){
                 $party->setCards($party->getCards()->getValues());
                 $party->setPlayers($party->getPlayers()->getValues());
+                $party->setVotes($party->getVotes()->getValues());
             }
             return $this->createResponse($parties);
         }
@@ -225,6 +233,7 @@ class LgpunController extends AbstractController
             $party = $partyRepo->findOneByCode($params['party']);
             $party->setStarted(true);
             $party->setEnded(false);
+            $party->setRelaunch(false);
             $this->shuffleCards($party->getCode());
             $this->getDoctrine()->getManager()->persist($party);
             $this->getDoctrine()->getManager()->flush();
@@ -604,6 +613,64 @@ class LgpunController extends AbstractController
             $this->getDoctrine()->getManager()->flush();
 
             return $this->createResponse(['success','swapped']);
+        }
+    }
+
+    /**
+     * @Route("/party/addVote", methods={"POST","OPTIONS"}, name="partyAddVote")
+     * @param Request $request
+     * @return Response
+     */
+    public function addVote(Request $request){
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+            $uRepo = $this->getDoctrine()->getRepository(Player::class);
+            $voteRepo = $this->getDoctrine()->getRepository(Vote::class);
+
+            $manager = $this->getDoctrine()->getManager();
+            $params = json_decode($request->getContent(), true);
+
+            $party = $partyRepo->findOneByCode($params['party']);
+
+            $newVote = new Vote();
+            $newVote->setTarget($uRepo->find($params['target']));
+            $newVote->setUser($uRepo->find($params['user']));
+
+            $manager->persist($newVote);
+
+            $party->addVote($newVote);
+
+            $manager->persist($party);
+            $manager->flush();
+
+            return $this->createResponse(['succes','vote added']);
+        }
+    }
+
+    /**
+     * @Route("/party/relaunch", methods={"POST","OPTIONS"}, name="partyRelaunch")
+     * @param Request $request
+     * @return Response
+     */
+    public function relaunchParty(Request $request){
+        if ($request->getMethod() == "OPTIONS"){
+            return $this->createResponse([]);
+        }else{
+            $partyRepo = $this->getDoctrine()->getRepository(Party::class);
+
+            $manager = $this->getDoctrine()->getManager();
+            $params = json_decode($request->getContent(), true);
+
+            $party = $partyRepo->findOneByCode($params['party']);
+
+            $party->setRelaunch(true);
+            $party->setStarted(false);
+            $party->setEnded(false);
+            $manager->persist($party);
+            $manager->flush();
+            return $this->createResponse(['success','party relaunched']);
         }
     }
 }

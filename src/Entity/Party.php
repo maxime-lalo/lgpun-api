@@ -82,12 +82,23 @@ class Party implements \JsonSerializable
      */
     private $turnEnd;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Vote::class, mappedBy="party")
+     */
+    private $votes;
+
+    /**
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $relaunch;
+
 
     public function __construct()
     {
         $this->players = new ArrayCollection();
         $this->cards = new ArrayCollection();
         $this->notUsedCards = new ArrayCollection();
+        $this->votes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -294,6 +305,49 @@ class Party implements \JsonSerializable
     public function setTurnEnd(?\DateTimeInterface $turnEnd): self
     {
         $this->turnEnd = $turnEnd;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Vote[]
+     */
+    public function getVotes(): Collection
+    {
+        return $this->votes;
+    }
+
+    public function setVotes($votes){
+        $this->votes = $votes;
+    }
+
+    public function addVote(Vote $vote): self
+    {
+        if (!$this->votes->contains($vote)) {
+            $this->votes[] = $vote;
+            $vote->addParty($this);
+        }
+
+        return $this;
+    }
+
+    public function removeVote(Vote $vote): self
+    {
+        if ($this->votes->removeElement($vote)) {
+            $vote->removeParty($this);
+        }
+
+        return $this;
+    }
+
+    public function getRelaunch(): ?bool
+    {
+        return $this->relaunch;
+    }
+
+    public function setRelaunch(?bool $relaunch): self
+    {
+        $this->relaunch = $relaunch;
 
         return $this;
     }
