@@ -348,7 +348,11 @@ class LgpunController extends AbstractController
             $manager->persist($party);
         }
 
+        $now = new DateTime('now');
+        $in20s = $now->add(new \DateInterval('PT20S'));
         $party->setTurn($minUser);
+        $party->setTurnEnd($in20s);
+        $manager->persist($party);
         $manager->flush();
     }
 
