@@ -372,7 +372,7 @@ class LgpunController extends AbstractController
     }
 
     /**
-     * @Route("/parties/nextTurn", methods={"GET", "POST","OPTIONS"}, name="allPartiesNextTurn")
+     * @Route("/parties/nextTurn", methods={"GET","POST","OPTIONS"}, name="allPartiesNextTurn")
      * @return Response
      */
     public function nextTurnAllParties(){
