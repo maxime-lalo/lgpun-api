@@ -9,6 +9,7 @@ use App\Entity\Card;
 
 use App\Entity\Vote;
 use DateTime;
+use Doctrine\DBAL\Driver\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -221,9 +222,10 @@ class LgpunController extends AbstractController
     /**
      * @Route("/party/start", methods={"POST","OPTIONS"}, name="partyStart")
      * @param Request $request
+     * @param Connection $connection
      * @return Response
      */
-    function partyStart(Request $request){
+    function partyStart(Request $request,Connection $connection){
         $partyRepo = $this->getDoctrine()->getRepository(Party::class);
 
         $params = json_decode($request->getContent(),true);
@@ -235,11 +237,8 @@ class LgpunController extends AbstractController
             $party->setEnded(false);
             $party->setRelaunch(false);
 
-            foreach($party->getVotes()->getValues() as $vote){
-                $party->removeVote($vote);
-            }
-            $this->getDoctrine()->persist($party);
-            $this->getDoctrine()->flush();
+            $stmt = $connection->prepare("DELETE a FROM vote a INNER JOIN vote_party b ON a.id = b.vote_id WHERE party_id = ?;");
+            $stmt->execute([$party->getId()]);
 
             $this->shuffleCards($party->getCode());
             $this->getDoctrine()->getManager()->persist($party);
