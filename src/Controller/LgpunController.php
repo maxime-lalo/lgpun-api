@@ -234,6 +234,13 @@ class LgpunController extends AbstractController
             $party->setStarted(true);
             $party->setEnded(false);
             $party->setRelaunch(false);
+
+            foreach($party->getVotes()->getValues() as $vote){
+                $party->removeVote($vote);
+            }
+            $this->getDoctrine()->persist($party);
+            $this->getDoctrine()->flush();
+
             $this->shuffleCards($party->getCode());
             $this->getDoctrine()->getManager()->persist($party);
             $this->getDoctrine()->getManager()->flush();
