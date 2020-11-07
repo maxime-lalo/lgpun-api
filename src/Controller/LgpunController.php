@@ -340,7 +340,7 @@ class LgpunController extends AbstractController
             if ($firstCardToPlay->getId() == $card->getId()){
                 // Si i est < 3 alors la première carte sera une fake card
                 if ($i < 3){
-                    $party->setFakeTurn($nucRepo->find($card->getId()));
+                    $party->setFakeTurn($card);
                     $party->setTurn(null);
                     $party->setTurnEnd($in20s);
                 }else{
