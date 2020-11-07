@@ -224,7 +224,7 @@ class LgpunController extends AbstractController
         }else{
             $party = $partyRepo->findOneByCode($params['party']);
             $party->setStarted(true);
-
+            $party->setEnded(false);
             $this->shuffleCards($party->getCode());
             $this->getDoctrine()->getManager()->persist($party);
             $this->getDoctrine()->getManager()->flush();
@@ -357,7 +357,7 @@ class LgpunController extends AbstractController
     }
 
     /**
-     * @Route("/parties/nextTurn", methods={"POST","OPTIONS"}, name="allPartiesNextTurn")
+     * @Route("/parties/nextTurn", methods={"GET","POST","OPTIONS"}, name="allPartiesNextTurn")
      * @return Response
      */
     public function nextTurnAllParties(){
